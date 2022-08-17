@@ -200,3 +200,5 @@ btnCarrito.addEventListener('click', () => {
     btnCarrito.innerHTML = 'shopping_cart';
   }
 });
+
+localStorage.setItem("weirdSofa","El sofa más raro es el de escorpión");
