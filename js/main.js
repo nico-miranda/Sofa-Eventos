@@ -1,8 +1,9 @@
 const btnCarrito = document.getElementById('btn-carrito');
+const cerrarCarrito = document.getElementById('cerrar-carrito');
 const displayCarrito = document.getElementById('carrito');
 
 const sofa = [
-  {
+   {
     id: 1,
     nombre: 'Sofa Ataúd Tapiz Violeta: Edición de diseñador',
     precio: 60000,
@@ -80,6 +81,7 @@ class Sofa {
   constructor(obj) {
     this.nombre = obj.nombre;
     this.id = obj.id;
+    this.cantidad = obj.cantidad;
     this.precio = obj.precio;
     this.precioIva = this.agregarIva();
   }
@@ -89,9 +91,20 @@ class Sofa {
   }
 }
 
-const carrito = [];
+const guardarProductosStorage = () => {
+  localStorage.setItem('carrito', JSON.stringify(carrito));
+};
+
+const cargarProductosStorage = () => {
+  return JSON.parse(localStorage.getItem('carrito')) || [];
+};
+
+const carrito = cargarProductosStorage();
 
 const generarHtmlCatalogo = () => {
+  const inputBusqueda = document.querySelector('.filtros [name="busqueda"]');
+  inputBusqueda.addEventListener('keyup', filtrarSofa);
+
   let catalogo = document.querySelector('#catalogo');
 
   sofa.forEach((sofa) => {
@@ -103,8 +116,13 @@ const generarHtmlCatalogo = () => {
       <div class="card__info">
         <p class="card__nombre">${sofa.nombre}</p>
         <p class="card__precio">$${sofa.precio}</p>
-      </div>
-      <button class="card__btn">Añadir al carrito</button>`;
+      </div>      
+      <button class="card__btn">
+        <span class="material-icons">
+          add_shopping_cart
+        </span>
+      </button>
+      `;
 
     catalogo.appendChild(elemento);
   });
@@ -114,8 +132,49 @@ const buscarSofa = (id) => {
   return sofa.find((sofa) => sofa.id === id);
 };
 
+const filtrarSofa = (e) => {
+  let catalogo = document.querySelector('#catalogo');
+  let value = e.target.value;
+  let sofaFiltrados = sofa.filter((el) =>
+    el.nombre.toLowerCase().includes(value.toLowerCase())
+  );
+
+  catalogo.innerHTML = '';
+
+  if (sofaFiltrados.length === 0) {
+    catalogo.innerHTML = `<h2>No se encontraron productos con la busqueda: "${value}"`;
+  } else {
+    sofaFiltrados.forEach((libro) => {
+      let elemento = document.createElement('div');
+      elemento.id = `card-${sofa.id}`;
+      elemento.className = 'card';
+      elemento.innerHTML = `
+        <img class="card__img" src="images/${sofa.imagen}">
+        <div class="card__info">
+          <p class="card__nombre">${sofa.nombre}</p>
+          <p class="card__precio">$${sofa.precio}</p>
+        </div>
+        <button class="card__btn">
+          <span class="material-icons">
+            add_shopping_cart
+          </span>
+        </button>`;
+
+      catalogo.appendChild(elemento);
+    });
+    cargarSofaCarrito();
+  }
+};
+
 const agregarSofa = (sofa) => {
-  carrito.push(sofa);
+  if (carrito.some((item) => item.id === sofa.id)) {
+    let duplicado = carrito.find((item) => item.id === sofa.id);
+    duplicado.cantidad++;
+  } else {
+    sofa.cantidad = 1;
+    carrito.push(sofa);
+  }
+  notificacionAgregado(sofa);
 };
 
 const cargarSofaCarrito = () => {
@@ -125,15 +184,27 @@ const cargarSofaCarrito = () => {
     btn.addEventListener('click', (e) => {
       let itemId = parseInt(e.target.closest('.card').id.slice(5));
 
+      btnCarrito.classList.add('agregado');
+      setTimeout(() => {
+        btnCarrito.classList.remove('agregado');
+      }, 1000);
+
       agregarSofa(buscarSofa(itemId));
+      guardarProductosStorage();
       generarHtmlCarrito();
     });
   });
 };
 
 const eliminarSofa = (id) => {
-  let posicion = carrito.findIndex((sofa) => sofa.id === id);
-  carrito.splice(posicion, 1);
+  if (carrito.some((el) => el.id === id)) {
+    if (carrito.find((el) => el.id === id).cantidad === 1) {
+      let posicion = carrito.findIndex((libro) => sofa.id === id);
+      carrito.splice(posicion, 1);
+    } else {
+      carrito.find((el) => el.id === id).cantidad--;
+    }
+  }
 };
 
 const eliminarSofaCarrito = () => {
@@ -144,61 +215,95 @@ const eliminarSofaCarrito = () => {
       let itemId = parseInt(e.target.closest('.product-container').id.slice(9));
 
       eliminarSofa(itemId);
+      guardarProductosStorage();
       generarHtmlCarrito();
     });
   });
+  actualizarCantidadCarrito();
+};
+
+const actualizarCantidadCarrito = () => {
+  let carritoCantidad = document.querySelector('#carrito-cantidad');
+
+  const productosCarrito = cargarProductosStorage();
+  let cantidadProductos = 0;
+
+  productosCarrito.forEach((producto) => {
+    cantidadProductos += producto.cantidad;
+  });
+
+  carritoCantidad.innerHTML = cantidadProductos;
+};
+
+const notificacionAgregado = (producto) => {
+  Toastify({
+    text: `Se agrego al carrito: "<b>${producto.nombre}</b>"`,
+    duration: 3000,
+    gravity: 'bottom',
+    position: 'left',
+    stopOnFocus: true,
+    escapeMarkup: false,
+    style: {
+      background: '#333333',
+      border: '1px solid #444444',
+      fontSize: '14px',
+    },
+  }).showToast();
 };
 
 const generarHtmlCarrito = () => {
   let contenedorCarrito = document.querySelector('.contenedor-carrito');
   let totalCarrito = document.querySelector('.total-carrito');
 
-  if (carrito.length === 0) {
+  const productosCarrito = cargarProductosStorage();
+
+  if (productosCarrito.length === 0) {
     contenedorCarrito.innerHTML = 'No hay productos en tu carrito.';
   } else {
     contenedorCarrito.innerHTML = '';
+    productosCarrito.forEach((producto) => {
+      let elemento = document.createElement('div');
+      elemento.id = `producto-${producto.id}`;
+      elemento.className = 'product-container';
+      elemento.innerHTML = `
+          <img class="sofa__img" src="images/${producto.imagen}">
+          <div class="sofa__info">
+            <p class="sofa__nombre">${producto.nombre}</p>
+            <p class="sofa__precio">$${producto.precio}</p>
+            <p class="sofa__cantidad">Cantidad: ${producto.cantidad}</p>
+          </div>
+          <button class="sofa__eliminar">&times</button>
+        `;
+      contenedorCarrito.appendChild(elemento);
+    });
   }
-
-  carrito.forEach((producto) => {
-    let elemento = document.createElement('div');
-    elemento.id = `producto-${producto.id}`;
-    elemento.className = 'product-container';
-    elemento.innerHTML = `
-      <img class="sofa__img" src="images/${producto.imagen}">
-      <div class="sofa__info">
-        <p class="sofa__nombre">${producto.nombre}</p>
-        <p class="sofa__precio">$${producto.precio}</p>
-      </div>
-      <button class="sofa__eliminar">&times</button>
-    `;
-
-    contenedorCarrito.appendChild(elemento);
-  });
-
   let total = 0;
+  let totalIva = 0;
 
-  for (const item of carrito) {
+  for (const item of productosCarrito) {
     let sofa = new Sofa(item);
     sofa.agregarIva();
-    total += sofa.precioIva;
+    totalIva += sofa.precioIva * sofa.cantidad;
+    total += sofa.precio * sofa.cantidad;
   }
 
-  totalCarrito.innerHTML = `Total a pagar: $${total.toFixed(2)}`;
+  totalCarrito.innerHTML = `
+  <span>Precio: $${total.toFixed(2)}</span>
+  <span>Impuesto IVA: $${(totalIva - total).toFixed(2)}</span>
+  <p>Total a pagar: $${totalIva.toFixed(2)}</p>
+  `;
 
   eliminarSofaCarrito();
 };
 
 generarHtmlCatalogo();
+generarHtmlCarrito();
 cargarSofaCarrito();
 
 btnCarrito.addEventListener('click', () => {
-  displayCarrito.classList.toggle('active');
-
-  if (displayCarrito.classList.contains('active')) {
-    btnCarrito.innerHTML = 'close';
-  } else {
-    btnCarrito.innerHTML = 'shopping_cart';
-  }
+  displayCarrito.classList.add('active');
 });
 
-localStorage.setItem("weirdSofa","El sofa más raro es el de escorpión");
+cerrarCarrito.addEventListener('click', () => {
+  displayCarrito.classList.remove('active');
+});
