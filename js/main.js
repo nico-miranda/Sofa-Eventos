@@ -171,7 +171,7 @@ const agregarSofa = (sofa) => {
     let duplicado = carrito.find((item) => item.id === sofa.id);
     duplicado.cantidad++;
   } else {
-    sofa.cantidad = 1;
+   sofa.cantidad = 1;
     carrito.push(sofa);
   }
   notificacionAgregado(sofa);
@@ -199,7 +199,7 @@ const cargarSofaCarrito = () => {
 const eliminarSofa = (id) => {
   if (carrito.some((el) => el.id === id)) {
     if (carrito.find((el) => el.id === id).cantidad === 1) {
-      let posicion = carrito.findIndex((libro) => sofa.id === id);
+      let posicion = carrito.findIndex((sofa) => sofa.id === id);
       carrito.splice(posicion, 1);
     } else {
       carrito.find((el) => el.id === id).cantidad--;
