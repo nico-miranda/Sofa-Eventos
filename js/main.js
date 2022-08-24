@@ -144,7 +144,7 @@ const filtrarSofa = (e) => {
   if (sofaFiltrados.length === 0) {
     catalogo.innerHTML = `<h2>No se encontraron productos con la busqueda: "${value}"`;
   } else {
-    sofaFiltrados.forEach((libro) => {
+    sofaFiltrados.forEach((sofa) => {
       let elemento = document.createElement('div');
       elemento.id = `card-${sofa.id}`;
       elemento.className = 'card';
