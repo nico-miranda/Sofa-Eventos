@@ -322,3 +322,10 @@ img {
   margin-top: 1em;
   user-select: none;
 }
+
+.joke {
+  padding: .5rem;
+  max-width: 300px;
+  background: lightgray;
+  text-align: center;
+}

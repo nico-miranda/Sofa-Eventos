@@ -307,3 +307,22 @@ btnCarrito.addEventListener('click', () => {
 cerrarCarrito.addEventListener('click', () => {
   displayCarrito.classList.remove('active');
 });
+
+
+  fetch("https://matchilling-chuck-norris-jokes-v1.p.rapidapi.com/jokes/search?query=%3CREQUIRED%3E",{ 
+	"method": "GET",
+	"headers": {
+		"accept": "application/json",
+		"X-RapidAPI-Key": "556642f38bmsh4948a6c44d4a338p1e70b1jsne9715f40d25f",
+		"X-RapidAPI-Host": "matchilling-chuck-norris-jokes-v1.p.rapidapi.com"
+	}
+ }).then(response => { 
+  return response.json()
+ }).then(jokes => { 
+  const comedy = jokes.result.map(jokeline => { 
+    return ` 
+    <p class="joke">${jokeline.value}</p>
+    ` 
+  })
+document.querySelector("#cnjokes").insertAdjacentHTML ('afterbegin',comedy);
+ })
